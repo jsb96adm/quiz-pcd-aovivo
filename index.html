@@ -1,0 +1,761 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --navy:#0F2340;
+    --navy-2:#183156;
+    --gold:#B08D3F;
+    --gold-light:#D9C08C;
+    --paper:#F7F5F0;
+    --paper-2:#EFEAE0;
+    --ink:#1B2430;
+    --ink-soft:#5B6472;
+    --ok:#2F7A4D;
+    --ok-bg:#E4F1E8;
+    --bad:#B5462F;
+    --bad-bg:#F7E7E2;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  #pcdquiz-root{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    min-height:100%;
+    padding:0;
+    -webkit-font-smoothing:antialiased;
+  }
+  #pcdquiz-root .display{font-family:'Fraunces',serif;}
+  #pcdquiz-root button{
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    border:none;
+    outline-offset:3px;
+  }
+  #pcdquiz-root button:focus-visible, #pcdquiz-root input:focus-visible{
+    outline:3px solid var(--gold);
+  }
+  .pq-shell{max-width:960px;margin:0 auto;padding:28px 20px 48px;}
+  .pq-shell.narrow{max-width:480px;}
+  .pq-eyebrow{
+    display:flex;align-items:center;gap:10px;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold);font-weight:700;margin-bottom:6px;
+  }
+  .pq-eyebrow .rule{flex:0 0 22px;height:1px;background:var(--gold);}
+  h1.pq-title{font-family:'Fraunces',serif;font-weight:600;font-size:30px;color:var(--navy);margin:0 0 6px;line-height:1.15;}
+  .pq-sub{color:var(--ink-soft);font-size:14.5px;margin:0 0 26px;}
+  .pq-card{
+    background:#fff;border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(15,35,64,.06), 0 12px 32px -18px rgba(15,35,64,.25);
+    border:1px solid #E7E2D6;
+  }
+  .pq-btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 22px;border-radius:9px;font-weight:700;font-size:14.5px;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  .pq-btn:active{transform:scale(.98);}
+  .pq-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .pq-btn-primary{background:var(--navy);color:#fff;}
+  .pq-btn-primary:hover:not(:disabled){background:var(--navy-2);}
+  .pq-btn-gold{background:var(--gold);color:#fff;}
+  .pq-btn-gold:hover:not(:disabled){background:#9a7a35;}
+  .pq-btn-ghost{background:transparent;color:var(--navy);border:1.5px solid #D8D2C2;}
+  .pq-btn-ghost:hover:not(:disabled){border-color:var(--navy);}
+  .pq-btn-danger{background:transparent;color:var(--bad);border:1.5px solid #E3C4BA;}
+
+  .pq-role-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;}
+  @media (max-width:640px){.pq-role-grid{grid-template-columns:1fr;}}
+  .pq-role-card{
+    padding:26px 22px;text-align:left;background:#fff;
+  }
+  .pq-role-card .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700;}
+  .pq-role-card h3{font-family:'Fraunces',serif;font-size:21px;margin:8px 0 6px;color:var(--navy);}
+  .pq-role-card p{font-size:13.5px;color:var(--ink-soft);margin:0 0 18px;line-height:1.5;}
+
+  /* Docket tab â signature element: question progress as case-file tabs */
+  .pq-docket{display:flex;gap:5px;margin-bottom:22px;flex-wrap:wrap;}
+  .pq-tab{
+    width:26px;height:30px;border-radius:4px 4px 0 0;
+    background:#E7E2D6;color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;font-family:'Fraunces',serif;
+    position:relative;top:0;transition:all .2s ease;
+  }
+  .pq-tab.done{background:var(--gold-light);color:var(--navy);}
+  .pq-tab.active{background:var(--navy);color:#fff;top:-4px;height:34px;box-shadow:0 4px 10px rgba(15,35,64,.3);}
+
+  .pq-qhead{padding:26px 26px 0;}
+  .pq-qnum{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;}
+  .pq-qtext{font-family:'Fraunces',serif;font-size:22px;color:var(--navy);line-height:1.35;margin:8px 0 22px;font-weight:600;}
+  .pq-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 26px 26px;}
+  @media (max-width:640px){.pq-options{grid-template-columns:1fr;}}
+  .pq-opt{
+    text-align:left;padding:16px 16px;border-radius:10px;border:1.5px solid #E3DECE;
+    background:#FCFBF8;display:flex;gap:12px;align-items:flex-start;font-size:14.5px;line-height:1.4;
+  }
+  .pq-opt:hover:not(:disabled){border-color:var(--gold);background:#FBF7EC;}
+  .pq-opt .letter{
+    flex:0 0 26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;font-family:'Fraunces',serif;
+  }
+  .pq-opt.correct{border-color:var(--ok);background:var(--ok-bg);}
+  .pq-opt.correct .letter{background:var(--ok);}
+  .pq-opt.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  .pq-opt.wrong .letter{background:var(--bad);}
+  .pq-opt.picked-correct::after{content:"Sua resposta â";margin-left:auto;font-size:11px;font-weight:700;color:var(--ok);white-space:nowrap;}
+  .pq-opt.picked-wrong::after{content:"Sua resposta";margin-left:auto;font-size:11px;font-weight:700;color:var(--bad);white-space:nowrap;}
+
+  .pq-timerwrap{padding:0 26px 6px;}
+  .pq-timerbar{height:6px;border-radius:4px;background:#EDE8DC;overflow:hidden;}
+  .pq-timerfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--navy));transition:width 1s linear;}
+
+  .pq-feedback{padding:40px 26px;text-align:center;}
+  .pq-feedback .big{font-family:'Fraunces',serif;font-size:26px;color:var(--navy);margin-bottom:8px;}
+  .pq-feedback .pts{font-size:15px;color:var(--ink-soft);}
+
+  .pq-explain{margin:0 26px 26px;padding:16px 18px;background:var(--paper-2);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;font-size:13.5px;line-height:1.55;color:var(--ink);}
+
+  .pq-lobby-name{padding:34px 26px;text-align:center;}
+  .pq-lobby-name input{
+    width:100%;max-width:320px;padding:14px 16px;border-radius:9px;border:1.5px solid #DCD6C6;
+    font-size:16px;text-align:center;margin:18px 0;font-family:'Inter',sans-serif;
+  }
+  .pq-lobby-name input:focus-visible{outline:3px solid var(--gold);border-color:var(--gold);}
+
+  .pq-wait{padding:56px 26px;text-align:center;color:var(--ink-soft);}
+  .pq-wait .pulse{
+    width:14px;height:14px;border-radius:50%;background:var(--gold);margin:0 auto 18px;
+    animation:pq-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pq-pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.6);opacity:.4;}}
+
+  .pq-rank-row{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid #EFEAE0;}
+  .pq-rank-row:last-child{border-bottom:none;}
+  .pq-rank-pos{font-family:'Fraunces',serif;font-weight:700;color:var(--ink-soft);width:26px;font-size:15px;}
+  .pq-rank-row.top1 .pq-rank-pos, .pq-rank-row.top2 .pq-rank-pos, .pq-rank-row.top3 .pq-rank-pos{color:var(--gold);}
+  .pq-rank-name{flex:1;font-weight:600;font-size:14.5px;color:var(--ink);}
+  .pq-rank-score{font-family:'Fraunces',serif;font-weight:700;color:var(--navy);font-size:16px;}
+  .pq-medal{font-size:18px;}
+
+  .pq-host-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+  .pq-pill{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:700;}
+  .pq-pill.gold{background:var(--gold-light);color:var(--navy);}
+
+  .pq-qr-box{background:#fff;padding:18px;border-radius:12px;display:inline-block;box-shadow:0 8px 20px -10px rgba(15,35,64,.3);}
+  .pq-join-row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+  .pq-join-row input{flex:1;min-width:220px;padding:11px 14px;border-radius:8px;border:1.5px solid #DCD6C6;font-size:13.5px;font-family:'Inter',sans-serif;}
+
+  .pq-controls{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap;}
+  .pq-footer{text-align:center;margin-top:36px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);opacity:.7;}
+  .pq-count-badge{font-size:12.5px;color:var(--ink-soft);padding:0 26px 18px;}
+
+  .pq-podium{display:flex;align-items:flex-end;justify-content:center;gap:14px;padding:30px 20px 10px;}
+  .pq-podium .place{text-align:center;}
+  .pq-podium .bar{border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:10px;color:#fff;font-family:'Fraunces',serif;font-weight:700;}
+  .pq-podium .p1 .bar{background:var(--gold);height:120px;width:92px;font-size:20px;}
+  .pq-podium .p2 .bar{background:var(--navy-2);height:88px;width:82px;font-size:17px;}
+  .pq-podium .p3 .bar{background:#8B7355;height:64px;width:82px;font-size:17px;}
+  .pq-podium .pname{font-weight:700;font-size:13px;margin-top:8px;max-width:100px;overflow-wrap:break-word;}
+  .pq-podium .pscore{font-size:12px;color:var(--ink-soft);}
+
+  .pq-back{background:none;border:none;color:var(--ink-soft);font-size:13px;font-weight:600;margin-bottom:14px;padding:0;text-decoration:underline;}
+</style>
+
+<div id="pcdquiz-root"></div>
+
+<script>
+(function(){
+
+const QUESTIONS = [
+  {
+    q:"Na aposentadoria da PCD por tempo de contribuiÃ§Ã£o, quanto tempo Ã© exigido de um HOMEM com deficiÃªncia GRAVE?",
+    options:{a:"20 anos",b:"25 anos",c:"29 anos",d:"33 anos"},
+    correct:"b",
+    explain:"Grave: 25 anos (H) / 20 (M). Moderada: 29/24. Leve: 33/28. Quanto mais grave, menor o tempo exigido (art. 3Âº, I a III, LC 142/2013)."
+  },
+  {
+    q:"Quais os requisitos da modalidade por IDADE da aposentadoria da PCD?",
+    options:{a:"65 (H)/62 (M) anos + 15 anos de contribuiÃ§Ã£o",b:"62 (H)/57 (M) anos + 20 anos de contribuiÃ§Ã£o",c:"60 (H)/55 (M) anos + 15 anos de contribuiÃ§Ã£o como PCD, qualquer grau",d:"60/55 anos + 25 anos, apenas para grau grave"},
+    correct:"c",
+    explain:"Art. 3Âº, IV, LC 142: 60 (H)/55 (M) anos + 15 anos de contribuiÃ§Ã£o na condiÃ§Ã£o de PCD, independentemente do grau."
+  },
+  {
+    q:"Qual a carÃªncia exigida nas duas modalidades da aposentadoria da PCD?",
+    options:{a:"60 contribuiÃ§Ãµes",b:"120 contribuiÃ§Ãµes",c:"240 contribuiÃ§Ãµes",d:"180 contribuiÃ§Ãµes"},
+    correct:"d",
+    explain:"SÃ£o exigidas 180 contribuiÃ§Ãµes mensais de carÃªncia, tanto por idade quanto por tempo de contribuiÃ§Ã£o."
+  },
+  {
+    q:"Sobre a distinÃ§Ã£o entre deficiÃªncia e incapacidade, Ã© correto afirmar:",
+    options:{a:"SÃ£o conceitos sinÃ´nimos",b:"A incapacidade pressupÃµe a deficiÃªncia; a deficiÃªncia nÃ£o depende da incapacidade para existir",c:"A deficiÃªncia pressupÃµe a incapacidade",d:"Toda pessoa com deficiÃªncia Ã© incapaz para o trabalho"},
+    correct:"b",
+    explain:"A incapacidade parte de uma deficiÃªncia que impede o exercÃ­cio laboral; jÃ¡ a deficiÃªncia pode existir sem incapacidade. A PCD trabalha, apesar das barreiras."
+  },
+  {
+    q:"Quem realiza a avaliaÃ§Ã£o da deficiÃªncia no INSS para fins de aposentadoria da PCD?",
+    options:{a:"PerÃ­cia mÃ©dica e serviÃ§o social, em avaliaÃ§Ã£o biopsicossocial",b:"Apenas o perito mÃ©dico",c:"Apenas o assistente social",d:"Uma junta de trÃªs mÃ©dicos"},
+    correct:"a",
+    explain:"AvaliaÃ§Ã£o biopsicossocial com dupla aplicaÃ§Ã£o (perÃ­cia mÃ©dica + serviÃ§o social), pelo IF-BrA, sobre 41 atividades em 7 domÃ­nios."
+  },
+  {
+    q:"No IF-BrA, uma atividade que a pessoa realiza sozinha, mas com adaptaÃ§Ã£o e mais lentamente (independÃªncia modificada), recebe:",
+    options:{a:"100 pontos",b:"50 pontos",c:"75 pontos",d:"25 pontos"},
+    correct:"c",
+    explain:"100 = independente pleno; 75 = independÃªncia modificada; 50 = auxÃ­lio de terceiros; 25 = nÃ£o realiza / dependÃªncia total. Menor pontuaÃ§Ã£o, deficiÃªncia mais grave."
+  },
+  {
+    q:"Qual faixa de pontuaÃ§Ã£o do IF-BrA enquadra a deficiÃªncia como GRAVE?",
+    options:{a:"â¤ 5.739",b:"5.740 a 6.354",c:"6.355 a 7.584",d:"â¥ 7.585"},
+    correct:"a",
+    explain:"Grave â¤ 5.739; moderada 5.740â6.354; leve 6.355â7.584; insuficiente â¥ 7.585 (Portaria Interministerial nÂº 1/2014)."
+  },
+  {
+    q:"Como fica a RMI da aposentadoria da PCD em cada modalidade?",
+    options:{a:"Sempre 60% + 2% por ano de contribuiÃ§Ã£o",b:"Por tempo: 70% + 1%; por idade: 100% do salÃ¡rio de benefÃ­cio",c:"Sempre 100% do salÃ¡rio de benefÃ­cio",d:"Por tempo: 100% do salÃ¡rio de benefÃ­cio; por idade: 70% + 1% por grupo de 12 contribuiÃ§Ãµes"},
+    correct:"d",
+    explain:"Art. 8Âº, LC 142: por tempo de contribuiÃ§Ã£o, 100% do SB; por idade, 70% + 1% por grupo de 12 contribuiÃ§Ãµes, atÃ© o teto de 100%."
+  },
+  {
+    q:"Como se apura o salÃ¡rio de benefÃ­cio da PCD e qual o efeito da EC 103/2019?",
+    options:{a:"MÃ©dia de 100% dos salÃ¡rios, por forÃ§a da EC 103",b:"MÃ©dia dos 80% maiores salÃ¡rios (art. 29); a EC 103 nÃ£o alterou a LC 142 (art. 22)",c:"MÃ©dia dos 60% maiores salÃ¡rios",d:"A EC 103 passou a exigir idade mÃ­nima de 65/62"},
+    correct:"b",
+    explain:"O art. 22 da EC 103 preservou a LC 142, inclusive o cÃ¡lculo: SB = mÃ©dia dos 80% maiores. O INSS Ã s vezes erra aplicando a mÃ©dia de 100% e/ou o coeficiente de 60% â o que rende revisÃ£o."
+  },
+  {
+    q:"Tempo especial e deficiÃªncia no mesmo perÃ­odo contributivo:",
+    options:{a:"Somam-se as duas reduÃ§Ãµes",b:"Usa-se sempre a reduÃ§Ã£o por deficiÃªncia",c:"NÃ£o se acumulam as duas reduÃ§Ãµes; converte-se o especial em tempo de PCD se for mais vantajoso",d:"Ã vedada qualquer conversÃ£o"},
+    correct:"c",
+    explain:"Art. 10 da LC 142 / art. 70-F do Dec. 3.048: as reduÃ§Ãµes nÃ£o se acumulam; permite-se converter o tempo especial em PCD apenas se resultar mais favorÃ¡vel ao segurado."
+  }
+];
+
+const DURATION_MS = 25000;
+const SESSION_KEY = "pcdquiz_session_v1";
+const PLAYER_PREFIX = "pcdquiz_player_v1_";
+const LETTERS = ["a","b","c","d"];
+
+let role = null; // 'host' | 'player'
+let playerId = null;
+let playerName = "";
+let playerCache = null; // last known own record
+let lastAnsweredIndex = -1;
+let session = {phase:"lobby", currentIndex:-1, questionStartedAt:0, ranking:[]};
+let players = [];
+let qrUrl = (typeof window !== "undefined" && window.location ? window.location.href : "");
+let pollHandle = null;
+let tickHandle = null;
+let loading = false;
+
+async function getKey(key){
+  try{
+    const r = await window.storage.get(key, true);
+    return r ? JSON.parse(r.value) : null;
+  }catch(e){ return null; }
+}
+async function setKey(key, val){
+  try{
+    await window.storage.set(key, JSON.stringify(val), true);
+    return true;
+  }catch(e){ console.error("storage set failed", e); return false; }
+}
+async function deleteKey(key){
+  try{ await window.storage.delete(key, true); }catch(e){}
+}
+async function listPlayerKeys(){
+  try{
+    const r = await window.storage.list(PLAYER_PREFIX, true);
+    return r ? r.keys : [];
+  }catch(e){ return []; }
+}
+async function fetchAllPlayers(){
+  const keys = await listPlayerKeys();
+  const vals = await Promise.all(keys.map(k => getKey(k)));
+  return vals.filter(Boolean).sort((a,b)=> (b.total||0)-(a.total||0));
+}
+function genId(){
+  return Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4);
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+async function refresh(){
+  const s = await getKey(SESSION_KEY);
+  session = s || {phase:"lobby", currentIndex:-1, questionStartedAt:0, ranking:[]};
+  if(role === "host"){
+    players = await fetchAllPlayers();
+  }
+  render();
+}
+
+function startPolling(){
+  stopPolling();
+  refresh();
+  pollHandle = setInterval(refresh, 2500);
+}
+function stopPolling(){
+  if(pollHandle) clearInterval(pollHandle);
+  pollHandle = null;
+}
+function startTicking(){
+  stopTicking();
+  tickHandle = setInterval(render, 1000);
+}
+function stopTicking(){
+  if(tickHandle) clearInterval(tickHandle);
+  tickHandle = null;
+}
+
+// ---------- ACTIONS ----------
+
+async function actionChooseRole(r){
+  role = r;
+  if(r === "host"){
+    startPolling();
+  } else {
+    render();
+  }
+}
+
+async function actionJoin(name){
+  if(!name || !name.trim()) return;
+  playerName = name.trim().slice(0,40);
+  playerId = genId();
+  playerCache = {name: playerName, total:0, answers:{}};
+  await setKey(PLAYER_PREFIX + playerId, playerCache);
+  startPolling();
+}
+
+async function actionHostStart(){
+  await setKey(SESSION_KEY, {phase:"question", currentIndex:0, questionStartedAt: Date.now(), ranking:[]});
+  refresh();
+}
+
+async function actionHostReveal(){
+  const list = await fetchAllPlayers();
+  players = list;
+  const ranking = list.map(p => ({name:p.name, total:p.total||0}));
+  await setKey(SESSION_KEY, {...session, phase:"reveal", ranking});
+  refresh();
+}
+
+async function actionHostRanking(){
+  await setKey(SESSION_KEY, {...session, phase:"ranking"});
+  refresh();
+}
+
+async function actionHostNext(){
+  const nextIdx = session.currentIndex + 1;
+  if(nextIdx >= QUESTIONS.length){
+    const list = await fetchAllPlayers();
+    const ranking = list.map(p => ({name:p.name, total:p.total||0}));
+    await setKey(SESSION_KEY, {...session, phase:"end", ranking});
+  } else {
+    await setKey(SESSION_KEY, {...session, phase:"question", currentIndex: nextIdx, questionStartedAt: Date.now()});
+  }
+  refresh();
+}
+
+async function actionHostReset(){
+  if(!confirm("Reiniciar o quiz? Isso apaga o placar de todos os participantes.")) return;
+  const keys = await listPlayerKeys();
+  await Promise.all(keys.map(k => deleteKey(k)));
+  await setKey(SESSION_KEY, {phase:"lobby", currentIndex:-1, questionStartedAt:0, ranking:[]});
+  refresh();
+}
+
+async function actionAnswer(letter){
+  if(session.phase !== "question") return;
+  if(lastAnsweredIndex === session.currentIndex) return;
+  lastAnsweredIndex = session.currentIndex;
+  const q = QUESTIONS[session.currentIndex];
+  const correct = letter === q.correct;
+  const elapsed = Date.now() - (session.questionStartedAt || Date.now());
+  const points = correct ? Math.max(200, Math.round(1000 - (Math.min(elapsed, DURATION_MS)/DURATION_MS)*800)) : 0;
+  const rec = (await getKey(PLAYER_PREFIX + playerId)) || {name: playerName, total:0, answers:{}};
+  rec.answers[session.currentIndex] = {choice: letter, correct, points};
+  rec.total = Object.values(rec.answers).reduce((sum,a)=>sum + (a.points||0), 0);
+  playerCache = rec;
+  await setKey(PLAYER_PREFIX + playerId, rec);
+  render();
+}
+
+// ---------- RENDER ----------
+
+function root(){ return document.getElementById("pcdquiz-root"); }
+
+function render(){
+  const el = root();
+  if(!el) return;
+  if(role === null){
+    el.innerHTML = viewRoleSelect();
+  } else if(role === "host"){
+    el.innerHTML = viewHost();
+    if(session.phase === "lobby"){
+      requestAnimationFrame(drawQR);
+    }
+  } else if(role === "player"){
+    el.innerHTML = viewPlayer();
+  }
+  attachHandlers(el);
+}
+
+function drawQR(){
+  const box = document.getElementById("pq-qrbox");
+  if(!box) return;
+  box.innerHTML = "";
+  try{
+    new QRCode(box, {text: qrUrl, width:196, height:196, colorDark:"#0F2340", colorLight:"#ffffff"});
+  }catch(e){}
+}
+
+function viewRoleSelect(){
+  return `
+  <div class="pq-shell narrow">
+    <div class="pq-eyebrow"><span class="rule"></span>Maximiano Advogados Â· Equipe PrevidenciÃ¡ria</div>
+    <h1 class="pq-title">Quiz ao vivo â Aposentadoria da PCD</h1>
+    <p class="pq-sub">LC 142/2013 Â· 10 questÃµes Â· escolha como vocÃª vai participar.</p>
+    <div class="pq-role-grid">
+      <div class="pq-card pq-role-card">
+        <div class="tag">Projetor</div>
+        <h3>Sou o apresentador</h3>
+        <p>Controla o ritmo do quiz, exibe o QR code para entrada e revela as respostas na tela grande.</p>
+        <button class="pq-btn pq-btn-primary" data-action="role-host">Abrir painel do apresentador</button>
+      </div>
+      <div class="pq-card pq-role-card">
+        <div class="tag">Celular</div>
+        <h3>Vou responder</h3>
+        <p>Entre com seu nome e responda pelo celular, acompanhando sua pontuaÃ§Ã£o em tempo real.</p>
+        <button class="pq-btn pq-btn-gold" data-action="role-player">Entrar no quiz</button>
+      </div>
+    </div>
+    <div class="pq-footer">Maximiano Advogados</div>
+  </div>`;
+}
+
+// ---- HOST ----
+
+function viewHost(){
+  const total = players.length;
+  let body = "";
+  if(session.phase === "lobby") body = hostLobby(total);
+  else if(session.phase === "question") body = hostQuestion(total);
+  else if(session.phase === "reveal") body = hostReveal();
+  else if(session.phase === "ranking") body = hostRanking(session.ranking, false);
+  else if(session.phase === "end") body = hostEnd(session.ranking);
+
+  return `
+  <div class="pq-shell">
+    <button class="pq-back" data-action="role-none">â trocar de painel</button>
+    <div class="pq-host-header">
+      <div>
+        <div class="pq-eyebrow"><span class="rule"></span>Painel do apresentador</div>
+        <h1 class="pq-title" style="font-size:24px;margin-bottom:0;">Aposentadoria da PCD â quiz ao vivo</h1>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <span class="pq-pill">${total} participante${total===1?"":"s"}</span>
+        ${session.phase!=="lobby" ? `<span class="pq-pill gold">Pergunta ${session.currentIndex+1} de ${QUESTIONS.length}</span>` : ""}
+      </div>
+    </div>
+    ${body}
+  </div>`;
+}
+
+function hostLobby(total){
+  return `
+  <div class="pq-card" style="padding:30px;text-align:center;">
+    <p style="font-size:14px;color:var(--ink-soft);margin:0 0 16px;">PeÃ§a para o grupo apontar a cÃ¢mera do celular para o cÃ³digo abaixo. Confirme se o link corresponde ao endereÃ§o pÃºblico deste artifact antes de comeÃ§ar.</p>
+    <div id="pq-qrbox" class="pq-qr-box"></div>
+    <div class="pq-join-row" style="max-width:520px;margin-left:auto;margin-right:auto;">
+      <input id="pq-url-input" type="text" value="${escapeHtml(qrUrl)}" />
+      <button class="pq-btn pq-btn-ghost" data-action="update-qr">Atualizar QR</button>
+    </div>
+  </div>
+  <div class="pq-card" style="margin-top:18px;padding:24px 26px;">
+    <div style="font-weight:700;color:var(--navy);font-size:14px;margin-bottom:10px;">Participantes que jÃ¡ entraram (${total})</div>
+    ${players.length === 0 ? `<div style="color:var(--ink-soft);font-size:13.5px;">Ainda ninguÃ©m entrou. Aguardando...</div>` :
+      `<div style="display:flex;flex-wrap:wrap;gap:8px;">${players.map(p=>`<span class="pq-pill" style="background:var(--paper-2);color:var(--navy);">${escapeHtml(p.name)}</span>`).join("")}</div>`}
+  </div>
+  <div class="pq-controls">
+    <button class="pq-btn pq-btn-primary" data-action="host-start" ${players.length===0 ? "disabled":""}>Iniciar quiz</button>
+  </div>`;
+}
+
+function hostQuestion(total){
+  const q = QUESTIONS[session.currentIndex];
+  const answered = players.filter(p => p.answers && p.answers[session.currentIndex]).length;
+  return `
+  <div class="pq-docket">${docketTabs()}</div>
+  <div class="pq-card">
+    <div class="pq-timerwrap" style="padding-top:20px;"><div class="pq-timerbar"><div class="pq-timerfill" style="width:${timerPct()}%;"></div></div></div>
+    <div class="pq-qhead">
+      <div class="pq-qnum">Pergunta ${session.currentIndex+1} de ${QUESTIONS.length}</div>
+      <div class="pq-qtext">${escapeHtml(q.q)}</div>
+    </div>
+    <div class="pq-options">
+      ${LETTERS.map(L => `
+        <div class="pq-opt">
+          <span class="letter">${L.toUpperCase()}</span>
+          <span>${escapeHtml(q.options[L])}</span>
+        </div>`).join("")}
+    </div>
+    <div class="pq-count-badge">${answered} de ${total} jÃ¡ responderam</div>
+  </div>
+  <div class="pq-controls">
+    <button class="pq-btn pq-btn-gold" data-action="host-reveal">Revelar resposta</button>
+  </div>`;
+}
+
+function hostReveal(){
+  const q = QUESTIONS[session.currentIndex];
+  const isLast = session.currentIndex >= QUESTIONS.length - 1;
+  return `
+  <div class="pq-docket">${docketTabs()}</div>
+  <div class="pq-card">
+    <div class="pq-qhead">
+      <div class="pq-qnum">Pergunta ${session.currentIndex+1} de ${QUESTIONS.length} â resposta</div>
+      <div class="pq-qtext">${escapeHtml(q.q)}</div>
+    </div>
+    <div class="pq-options">
+      ${LETTERS.map(L => `
+        <div class="pq-opt ${L===q.correct ? "correct":""}">
+          <span class="letter">${L.toUpperCase()}</span>
+          <span>${escapeHtml(q.options[L])}</span>
+        </div>`).join("")}
+    </div>
+    <div class="pq-explain">${escapeHtml(q.explain)}</div>
+  </div>
+  <div class="pq-controls">
+    <button class="pq-btn pq-btn-primary" data-action="host-ranking">Ver ranking</button>
+    <button class="pq-btn pq-btn-ghost" data-action="host-next">${isLast ? "Encerrar quiz" : "PrÃ³xima pergunta"}</button>
+  </div>`;
+}
+
+function hostRanking(ranking, isFinal){
+  const isLast = session.currentIndex >= QUESTIONS.length - 1;
+  return `
+  <div class="pq-card">
+    <div style="padding:22px 26px 6px;font-weight:700;color:var(--navy);font-family:'Fraunces',serif;font-size:19px;">Ranking parcial</div>
+    ${rankingList(ranking)}
+  </div>
+  <div class="pq-controls">
+    <button class="pq-btn pq-btn-primary" data-action="host-next">${isLast ? "Encerrar quiz" : "PrÃ³xima pergunta"}</button>
+  </div>`;
+}
+
+function hostEnd(ranking){
+  return `
+  <div class="pq-card">
+    <div style="padding:24px 26px 0;text-align:center;">
+      <div class="pq-eyebrow" style="justify-content:center;"><span class="rule"></span>Resultado final<span class="rule"></span></div>
+      <h2 class="display" style="font-size:24px;color:var(--navy);margin:6px 0 0;">Aposentadoria da PCD</h2>
+    </div>
+    ${podium(ranking)}
+    ${rankingList(ranking.slice(3))}
+  </div>
+  <div class="pq-controls">
+    <button class="pq-btn pq-btn-danger" data-action="host-reset">Reiniciar quiz para nova turma</button>
+  </div>`;
+}
+
+function podium(ranking){
+  const p = [ranking[1], ranking[0], ranking[2]]; // 2nd, 1st, 3rd for visual order
+  const classes = ["p2","p1","p3"];
+  const medals = ["ð¥","ð¥","ð¥"];
+  return `<div class="pq-podium">
+    ${p.map((pl,i)=> pl ? `
+      <div class="place ${classes[i]}">
+        <div class="bar">${medals[i]}</div>
+        <div class="pname">${escapeHtml(pl.name)}</div>
+        <div class="pscore">${pl.total} pts</div>
+      </div>` : "").join("")}
+  </div>`;
+}
+
+function rankingList(ranking){
+  if(!ranking || ranking.length===0) return `<div style="padding:20px 26px;color:var(--ink-soft);font-size:13.5px;">Sem dados ainda.</div>`;
+  return `<div style="padding:6px 6px 18px;">
+    ${ranking.map((p,i)=>`
+      <div class="pq-rank-row ${i===0?"top1":i===1?"top2":i===2?"top3":""}">
+        <span class="pq-rank-pos">${i+1}</span>
+        <span class="pq-rank-name">${escapeHtml(p.name)}</span>
+        <span class="pq-rank-score">${p.total} pts</span>
+      </div>`).join("")}
+  </div>`;
+}
+
+function docketTabs(){
+  return QUESTIONS.map((_,i)=>{
+    let cls = "";
+    if(i < session.currentIndex) cls = "done";
+    if(i === session.currentIndex) cls = "active";
+    return `<div class="pq-tab ${cls}">${i+1}</div>`;
+  }).join("");
+}
+
+function timerPct(){
+  if(session.phase !== "question") return 100;
+  const elapsed = Date.now() - (session.questionStartedAt||Date.now());
+  const pct = Math.max(0, 100 - (elapsed/DURATION_MS)*100);
+  return pct;
+}
+
+// ---- PLAYER ----
+
+function viewPlayer(){
+  if(!playerId) return playerJoin();
+  if(session.phase === "lobby") return playerWaitingLobby();
+  if(session.phase === "question"){
+    if(lastAnsweredIndex === session.currentIndex) return playerAnsweredWait();
+    return playerQuestion();
+  }
+  if(session.phase === "reveal") return playerReveal();
+  if(session.phase === "ranking") return playerRankingView();
+  if(session.phase === "end") return playerEnd();
+  return playerWaitingLobby();
+}
+
+function playerJoin(){
+  return `
+  <div class="pq-shell narrow">
+    <button class="pq-back" data-action="role-none">â voltar</button>
+    <div class="pq-eyebrow"><span class="rule"></span>Aposentadoria da PCD</div>
+    <h1 class="pq-title" style="font-size:24px;">Entrar no quiz</h1>
+    <div class="pq-card pq-lobby-name">
+      <p style="color:var(--ink-soft);font-size:14px;margin:0;">Digite seu nome como quer aparecer no ranking.</p>
+      <input id="pq-name-input" type="text" placeholder="Seu nome" maxlength="40" />
+      <div><button class="pq-btn pq-btn-primary" data-action="join">Entrar</button></div>
+    </div>
+    <div class="pq-footer">NÃ£o atualize a pÃ¡gina depois de entrar</div>
+  </div>`;
+}
+
+function playerShell(inner){
+  return `
+  <div class="pq-shell narrow">
+    <div class="pq-eyebrow"><span class="rule"></span>${escapeHtml(playerName)} Â· ${playerCache && playerCache.total ? playerCache.total+" pts" : "0 pts"}</div>
+    ${inner}
+  </div>`;
+}
+
+function playerWaitingLobby(){
+  return playerShell(`
+    <div class="pq-card pq-wait">
+      <div class="pulse"></div>
+      <div style="font-weight:700;color:var(--navy);font-family:'Fraunces',serif;font-size:19px;">VocÃª estÃ¡ dentro!</div>
+      <p style="margin-top:8px;">Aguardando o apresentador iniciar o quiz.</p>
+    </div>`);
+}
+
+function playerQuestion(){
+  const q = QUESTIONS[session.currentIndex];
+  return playerShell(`
+    <div class="pq-card">
+      <div class="pq-timerwrap" style="padding-top:18px;"><div class="pq-timerbar"><div class="pq-timerfill" style="width:${timerPct()}%;"></div></div></div>
+      <div class="pq-qhead" style="padding:16px 20px 0;">
+        <div class="pq-qnum">Pergunta ${session.currentIndex+1} de ${QUESTIONS.length}</div>
+        <div class="pq-qtext" style="font-size:18px;">${escapeHtml(q.q)}</div>
+      </div>
+      <div class="pq-options" style="grid-template-columns:1fr;padding:0 20px 22px;">
+        ${LETTERS.map(L=>`
+          <button class="pq-btn pq-opt" data-action="answer" data-letter="${L}" style="width:100%;">
+            <span class="letter">${L.toUpperCase()}</span>
+            <span>${escapeHtml(q.options[L])}</span>
+          </button>`).join("")}
+      </div>
+    </div>`);
+}
+
+function playerAnsweredWait(){
+  const rec = playerCache && playerCache.answers ? playerCache.answers[session.currentIndex] : null;
+  if(!rec) return playerWaitingLobby();
+  return playerShell(`
+    <div class="pq-card pq-feedback">
+      <div class="big" style="color:${rec.correct?"var(--ok)":"var(--bad)"};">${rec.correct ? "Certinho! â" : "NÃ£o foi dessa vez"}</div>
+      <div class="pts">${rec.correct ? "+"+rec.points+" pontos" : "0 pontos"} Â· aguardando o apresentador revelar</div>
+    </div>`);
+}
+
+function playerReveal(){
+  const q = QUESTIONS[session.currentIndex];
+  const rec = playerCache && playerCache.answers ? playerCache.answers[session.currentIndex] : null;
+  return playerShell(`
+    <div class="pq-card">
+      <div class="pq-qhead" style="padding:18px 20px 0;">
+        <div class="pq-qnum">Resposta certa</div>
+        <div class="pq-qtext" style="font-size:17px;">${escapeHtml(q.q)}</div>
+      </div>
+      <div class="pq-options" style="grid-template-columns:1fr;padding:0 20px 10px;">
+        ${LETTERS.map(L=>{
+          let cls = L===q.correct ? "correct":"";
+          if(rec && rec.choice===L) cls += rec.correct ? " picked-correct":" picked-wrong";
+          return `<div class="pq-opt ${cls}"><span class="letter">${L.toUpperCase()}</span><span>${escapeHtml(q.options[L])}</span></div>`;
+        }).join("")}
+      </div>
+      <div class="pq-explain">${escapeHtml(q.explain)}</div>
+    </div>`);
+}
+
+function playerRankingView(){
+  const ranking = session.ranking || [];
+  const myPos = ranking.findIndex(p => p.name === playerName);
+  return playerShell(`
+    <div class="pq-card">
+      <div style="padding:20px 20px 4px;font-weight:700;color:var(--navy);font-family:'Fraunces',serif;font-size:18px;">Ranking parcial</div>
+      ${rankingList(ranking.slice(0,5))}
+      ${myPos>4 ? `<div style="padding:0 20px 18px;font-size:13px;color:var(--ink-soft);">VocÃª estÃ¡ em ${myPos+1}Âº lugar</div>` : ""}
+    </div>`);
+}
+
+function playerEnd(){
+  const ranking = session.ranking || [];
+  const myPos = ranking.findIndex(p => p.name === playerName);
+  return playerShell(`
+    <div class="pq-card" style="text-align:center;padding:24px 0;">
+      <div style="font-family:'Fraunces',serif;font-size:21px;color:var(--navy);">Quiz encerrado!</div>
+      ${podium(ranking)}
+      ${myPos>=0 ? `<p style="font-size:14px;color:var(--ink-soft);">VocÃª ficou em <strong style="color:var(--navy);">${myPos+1}Âº lugar</strong> com ${ranking[myPos].total} pontos.</p>` : ""}
+    </div>`);
+}
+
+// ---------- EVENTS ----------
+
+function attachHandlers(el){
+  el.querySelectorAll("[data-action]").forEach(node=>{
+    const act = node.getAttribute("data-action");
+    node.onclick = async (e)=>{
+      e.preventDefault();
+      if(act === "role-host"){ await actionChooseRole("host"); }
+      else if(act === "role-player"){ await actionChooseRole("player"); }
+      else if(act === "role-none"){ stopPolling(); role=null; render(); }
+      else if(act === "join"){
+        const input = document.getElementById("pq-name-input");
+        await actionJoin(input ? input.value : "");
+      }
+      else if(act === "update-qr"){
+        const input = document.getElementById("pq-url-input");
+        if(input && input.value.trim()) qrUrl = input.value.trim();
+        drawQR();
+      }
+      else if(act === "host-start"){ await actionHostStart(); }
+      else if(act === "host-reveal"){ await actionHostReveal(); }
+      else if(act === "host-ranking"){ await actionHostRanking(); }
+      else if(act === "host-next"){ await actionHostNext(); }
+      else if(act === "host-reset"){ await actionHostReset(); }
+      else if(act === "answer"){
+        const letter = node.getAttribute("data-letter");
+        await actionAnswer(letter);
+      }
+    };
+  });
+}
+
+render();
+startTicking();
+
+})();
+</script>
